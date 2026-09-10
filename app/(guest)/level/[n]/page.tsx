@@ -31,8 +31,8 @@ export default async function LevelPage({ params }: PageProps<'/level/[n]'>) {
         <Card>
           <p className="text-[var(--muted)]">Dieses Level ist noch geschlossen.</p>
           {target && (
-            <p className="mt-2 text-3xl font-semibold tabular-nums">
-              <Countdown target={target} />
+            <p className="mt-2 text-3xl font-semibold">
+              <Countdown target={target} fallback="…" />
             </p>
           )}
         </Card>

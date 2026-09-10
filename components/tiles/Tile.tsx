@@ -70,9 +70,7 @@ function StateBadge({ state }: { state: TileState }) {
     return (
       <span className="shrink-0 rounded-full bg-[var(--border)] px-3 py-1 text-[14px] text-[var(--muted)]">
         {state.unlockAt ? (
-          <>
-            in <Countdown target={state.unlockAt} />
-          </>
+          <Countdown target={state.unlockAt} prefix="in " fallback="gesperrt" />
         ) : (
           (state.note ?? 'gesperrt')
         )}

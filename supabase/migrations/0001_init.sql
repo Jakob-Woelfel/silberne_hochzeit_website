@@ -130,7 +130,11 @@ begin
 end;
 $$;
 
+-- Nur die API (service_role) darf Gaeste anlegen, der Browser nicht.
+-- Achtung: `revoke from public` nimmt das Recht auch service_role weg,
+-- deshalb muss das grant danach kommen.
 revoke all on function create_guest(text) from public, anon, authenticated;
+grant execute on function create_guest(text) to service_role;
 
 -- =========================================================
 -- RLS und Rechte

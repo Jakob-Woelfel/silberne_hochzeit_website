@@ -29,18 +29,28 @@ idempotent, mehrfaches Ausführen schadet nicht.
 
 ### 2. Umgebungsvariablen
 
-`.env.example` nach `.env.local` kopieren und ausfüllen. Die Werte stehen unter
-**Project Settings → API**:
+`.env.example` nach `.env.local` kopieren und ausfüllen. Die Schlüssel stehen
+unter **Project Settings → API Keys**.
 
-| Variable | Wert |
+Die Variablennamen entsprechen dem, was im Dashboard steht. Der frühere anon
+key heißt dort inzwischen **Publishable key**, der frühere service_role key
+heißt **Secret key**. Beide zeigen weiterhin auf dieselben Datenbankrollen.
+
+| Variable | Wert im Dashboard |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role key, **nur Server** |
-| `HOST_SECRET` | frei wählbar, schützt später `/host` und `/screen` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | **Publishable key**, beginnt mit `sb_publishable_` |
+| `SUPABASE_SECRET_KEY` | **Secret key**, beginnt mit `sb_secret_`, **nur Server** |
+| `HOST_SECRET` | frei wählbar, schützt `/admin` und später `/host` |
 | `UNLOCK_ALL` | `true` in der Entwicklung, `false` in Produktion |
 | `NEXT_PUBLIC_UNLOCK_ALL` | dasselbe, für die Countdowns im Browser |
 | `NEXT_PUBLIC_EVENT_DATE` | `2026-09-12` |
+
+Die **JWKS-URL** wird nicht gebraucht. Sie dient dazu, Anmelde-Token zu prüfen,
+und die App hat keine Anmeldung.
+
+Der Secret Key darf nie in eine Variable mit `NEXT_PUBLIC_` Präfix. Alles mit
+diesem Präfix wird ins JavaScript gebacken, das die Gäste herunterladen.
 
 ### 3. Starten
 

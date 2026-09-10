@@ -7,10 +7,16 @@ import { formatDuration, serverNow, syncServerTime } from '@/lib/time';
 export function Countdown({
   target,
   onDone,
+  prefix = '',
+  fallback = '–:–',
   className = '',
 }: {
   target: number;
   onDone?: () => void;
+  /** Text vor der Zeit, erscheint erst nach dem Serverzeit-Abgleich. */
+  prefix?: string;
+  /** Anzeige, solange die Serverzeit noch nicht bekannt ist. */
+  fallback?: string;
   className?: string;
 }) {
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -41,10 +47,13 @@ export function Countdown({
   }, [target, onDone]);
 
   if (remaining === null) {
-    return <span className={`tabular-nums text-[var(--muted)] ${className}`}>–:–</span>;
+    return <span className={className}>{fallback}</span>;
   }
 
   return (
-    <span className={`tabular-nums ${className}`}>{formatDuration(remaining)}</span>
+    <span className={`tabular-nums ${className}`}>
+      {prefix}
+      {formatDuration(remaining)}
+    </span>
   );
 }
