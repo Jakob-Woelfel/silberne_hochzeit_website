@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Silberhochzeit-App
 
-## Getting Started
+Mobile Web-App für die Silberhochzeit am 12.09.2026: Quiz-Level, Selfie-Bingo
+und eine Live-Runde am Abend. Rund 60 Gäste, Einstieg per QR-Code, kein Login.
 
-First, run the development server:
+Konzept und Scope stehen in [KICKOFF.md](KICKOFF.md).
 
-```bash
+## Stand
+
+**Phase 1 – Fundament** ist gebaut:
+
+- Gast-Anlage ohne Login, Team-Zuteilung per Round-Robin
+- Startseite mit Kacheln, Countdown auf die Freischaltzeiten
+- Level 1 durchspielbar, jede Antwort sofort gespeichert
+- Punkteberechnung ausschließlich serverseitig
+- Ranking: Team-Wertung öffentlich, Solo nur der eigene Platz
+
+Level 2/3, Bingo und Live-Runde sind angelegt, aber noch leer.
+
+## Einrichten
+
+### 1. Supabase-Projekt
+
+Auf [supabase.com](https://supabase.com) ein Projekt in der Region
+**Frankfurt (eu-central-1)** anlegen. Dann im **SQL Editor** den Inhalt von
+`supabase/migrations/0001_init.sql` einfügen und ausführen. Das legt Tabellen,
+Views, die Funktion `create_guest` und alle Zugriffsregeln an. Das Skript ist
+idempotent, mehrfaches Ausführen schadet nicht.
+
+### 2. Umgebungsvariablen
+
+`.env.example` nach `.env.local` kopieren und ausfüllen. Die Werte stehen unter
+**Project Settings → API**:
+
+| Variable | Wert |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role key, **nur Server** |
+| `HOST_SECRET` | frei wählbar, schützt später `/host` und `/screen` |
+| `UNLOCK_ALL` | `true` in der Entwicklung, `false` in Produktion |
+| `NEXT_PUBLIC_UNLOCK_ALL` | dasselbe, für die Countdowns im Browser |
+| `NEXT_PUBLIC_EVENT_DATE` | `2026-09-12` |
+
+### 3. Starten
+
+```
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Skripte
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+npm run dev        Entwicklungsserver
+npm run build      Produktions-Build
+npm test           Scoring-Tests
+npm run typecheck  TypeScript ohne Emit
+npm run lint       ESLint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Wo die Inhalte stehen
 
-## Learn More
+Alle Fragen, Texte und Zeiten liegen in `content/`. Das ist die einzige Stelle,
+die für neue Inhalte angefasst werden muss.
 
-To learn more about Next.js, take a look at the following resources:
+| Datei | Inhalt |
+|---|---|
+| `content/levels.ts` | Fragen für Level 1–3, **ohne Lösungen** |
+| `content/levels.solutions.ts` | die Lösungen, nur auf dem Server lesbar |
+| `content/teams.ts` | Teamnamen und Farben |
+| `content/schedule.ts` | Freischaltzeiten |
+| `content/bingo.ts` | Bingo-Felder (Phase 3) |
+| `content/live.ts` | Live-Fragen (Phase 4) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Die Fragen in `levels.ts` sind aktuell **Platzhalter** und mit `PLATZHALTER`
+markiert. Beim Ersetzen müssen Frage und Lösung dieselbe `id` behalten.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Warum die Lösungen getrennt liegen
 
-## Deploy on Vercel
+`content/levels.solutions.ts` beginnt mit `import 'server-only'`. Sobald jemand
+diese Datei aus einer Client Component importiert, bricht der Build ab. So
+landet keine Lösung im JavaScript, das die Gäste herunterladen. Die Punkte
+berechnet ausschließlich `app/api/answer/route.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Gegenprobe nach einem Build:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+npm run build
+grep -r "Wonderful Tonight" .next/static   # darf nichts finden
+```
+
+## Vor der Feier
+
+`scripts/reset.sql` im SQL-Editor ausführen. Das löscht alle Testgäste,
+Antworten und Uploads. Teams und Live-Session bleiben stehen.
