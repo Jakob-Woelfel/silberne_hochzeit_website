@@ -5,6 +5,7 @@ import { questionById } from '@/content/levels';
 import { solutionFor } from '@/content/levels.solutions';
 import { score } from '@/lib/scoring';
 import { isTaskOpen } from '@/lib/unlock';
+import { isAdminPreview } from '@/lib/admin';
 import type { AnswerValue } from '@/content/types';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +38,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Aufgabe unbekannt.' }, { status: 404 });
   }
 
-  if (!isTaskOpen(taskId)) {
+  // Der Admin-Vorschaumodus hebt die Sperre nur fuer diesen Browser auf.
+  if (!isTaskOpen(taskId) && !(await isAdminPreview())) {
     return NextResponse.json(
       { error: 'Diese Aufgabe ist noch nicht freigeschaltet.' },
       { status: 403 },

@@ -59,6 +59,52 @@ npm install
 npm run dev
 ```
 
+## Admin-Bereich
+
+`/admin` zeigt alles, was Gästen verborgen bleibt, und steuert die Spielrunde.
+Geschützt ist er allein durch `HOST_SECRET`.
+
+Einstieg auf zwei Wegen:
+
+- `/admin` aufrufen und den Schlüssel in das Formular tippen
+- einmalig `/admin/enter?key=DEIN_SECRET` aufrufen, dann reicht künftig `/admin`
+
+Der Schlüssel liegt danach zwölf Stunden in einem Cookie, das JavaScript nicht
+lesen kann.
+
+### Was dort geht
+
+| Bereich | Inhalt |
+|---|---|
+| Status | Datenbankverbindung, Anzahl Gäste, Antworten, vergebene Punkte |
+| Freischaltung | wann welches Modul öffnet und ob es gerade offen ist |
+| Inhalte | Fragen pro Level, fehlende Lösungen, verbliebene Platzhalter |
+| Teams | Team-Wertung |
+| Gäste | vollständiges Solo-Ranking, für Gäste unsichtbar |
+
+Pro Gast: Name korrigieren, Team umhängen, in die Gast-Ansicht schlüpfen,
+Antworten zurücksetzen, Gast löschen. Unter `/admin/content` stehen alle Fragen
+mit ihren Lösungen im Klartext.
+
+### Vorschau-Modus
+
+Der Schalter unter *Steuerung* hebt alle Freischaltzeiten auf, aber nur für
+deinen Browser. Gäste merken davon nichts. So lässt sich am Vorabend jedes Level
+durchspielen, während in Produktion `UNLOCK_ALL=false` steht.
+
+### In einen Gast schlüpfen
+
+In der Gästetabelle öffnet *als Gast öffnen* die App mit dessen Identität.
+Oben läuft dann ein dunkler Balken mit, damit klar bleibt, dass das nicht die
+eigene Sitzung ist. *Identität ablegen* im Dashboard beendet das wieder.
+
+### Zurücksetzen
+
+Ganz unten löscht *Zurücksetzen* alle Gäste, Antworten und Uploads. Der
+Bestätigungstext muss wörtlich getippt werden. Vor der Feier einmal ausführen,
+damit keine Testdaten in die Wertung laufen. Alternativ `scripts/reset.sql` im
+SQL-Editor.
+
 ## Skripte
 
 ```
@@ -102,5 +148,12 @@ grep -r "Wonderful Tonight" .next/static   # darf nichts finden
 
 ## Vor der Feier
 
-`scripts/reset.sql` im SQL-Editor ausführen. Das löscht alle Testgäste,
-Antworten und Uploads. Teams und Live-Session bleiben stehen.
+Testdaten löschen: entweder im Admin-Bereich unter *Zurücksetzen* oder
+`scripts/reset.sql` im SQL-Editor. Teams und Live-Session bleiben stehen.
+
+Außerdem `HOST_SECRET` durch etwas Langes und Zufälliges ersetzen. Das Dashboard
+warnt, solange der Wert zu kurz oder erratbar ist. Einen erzeugen:
+
+```
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+```

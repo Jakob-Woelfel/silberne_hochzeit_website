@@ -18,6 +18,17 @@ lesen, bevor etwas gebaut wird.
 - Alle Datenbankzugriffe der App laufen über den Service-Role-Key auf dem
   Server. Der Anon-Key darf nur `teams`, `session` und `team_ranking` lesen.
 
+## Admin-Bereich
+
+`/admin` ist hinter `HOST_SECRET`. Alles, was Gästen verborgen bleibt (volles
+Solo-Ranking, Lösungen im Klartext), gehört dorthin und nirgendwo sonst hin.
+Neue Admin-Aktionen kommen in `app/api/admin/route.ts` und prüfen zuerst
+`isAdmin()`.
+
+Der Vorschau-Modus (`isAdminPreview()`) hebt Freischaltzeiten nur für den
+eigenen Browser auf. Jede neue Zeitsperre muss ihn berücksichtigen, sonst kann
+man das Modul vorab nicht testen.
+
 ## Prüfen vor der Übergabe
 
 ```

@@ -2,6 +2,7 @@ import { getAllAnswers, getGuest } from '@/lib/guest';
 import { LEVELS, LEVEL_NUMBERS } from '@/content/levels';
 import { unlockTimestamp } from '@/content/schedule';
 import { isModuleOpen } from '@/lib/unlock';
+import { isAdminPreview } from '@/lib/admin';
 import { Tile, type TileState } from '@/components/tiles/Tile';
 import { redirect } from 'next/navigation';
 
@@ -12,6 +13,7 @@ export default async function HomePage() {
   if (!guest) redirect('/start');
 
   const answers = await getAllAnswers(guest.id);
+  const preview = await isAdminPreview();
 
   const levelTiles = LEVEL_NUMBERS.map((n) => {
     const level = LEVELS[n];
@@ -21,7 +23,7 @@ export default async function HomePage() {
     const points = answered.reduce((sum, q) => sum + (answers[q.id]?.points ?? 0), 0);
 
     let state: TileState;
-    if (!isModuleOpen(key)) {
+    if (!isModuleOpen(key) && !preview) {
       state = { kind: 'locked', unlockAt: unlockTimestamp(key) };
     } else if (total === 0) {
       state = { kind: 'soon', note: 'kommt noch' };

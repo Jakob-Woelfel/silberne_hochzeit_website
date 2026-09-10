@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { LEVELS, isLevelNumber } from '@/content/levels';
 import { unlockTimestamp, type ModuleKey } from '@/content/schedule';
 import { isModuleOpen } from '@/lib/unlock';
+import { isAdminPreview } from '@/lib/admin';
 import { getAnswersForPrefix, getGuest } from '@/lib/guest';
 import { Countdown } from '@/components/ui/Countdown';
 import { Card } from '@/components/ui/Card';
@@ -23,7 +24,7 @@ export default async function LevelPage({ params }: PageProps<'/level/[n]'>) {
   const level = LEVELS[num];
   const key = `l${num}` as ModuleKey;
 
-  if (!isModuleOpen(key)) {
+  if (!isModuleOpen(key) && !(await isAdminPreview())) {
     const target = unlockTimestamp(key);
     return (
       <div className="flex flex-col gap-5">

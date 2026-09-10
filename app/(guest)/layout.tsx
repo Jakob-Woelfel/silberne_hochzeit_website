@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { getGuest, getStanding } from '@/lib/guest';
 import { teamById } from '@/content/teams';
 import { BottomNav } from '@/components/BottomNav';
+import { isAdmin, isAdminPreview } from '@/lib/admin';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +13,19 @@ export default async function GuestLayout({ children }: LayoutProps<'/'>) {
 
   const standing = await getStanding(guest);
   const team = teamById(guest.team_id);
+  const [admin, preview] = await Promise.all([isAdmin(), isAdminPreview()]);
 
   return (
     <div className="flex min-h-full flex-col">
+      {admin && (
+        <div className="bg-[var(--foreground)] px-4 py-1.5 text-center text-[14px] text-white">
+          Admin-Ansicht als {guest.name}
+          {preview && ' · Vorschau: alle Level offen'}{' '}
+          <Link href="/admin" className="underline underline-offset-2">
+            zum Dashboard
+          </Link>
+        </div>
+      )}
       <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">

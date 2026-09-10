@@ -143,14 +143,15 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      const del = async (table: 'uploads' | 'answers' | 'guests') =>
-        db.from(table).delete().gte('created_at', '1970-01-01');
-
+      // Reihenfolge egal, weil answers und uploads per Cascade an guests haengen.
+      // Trotzdem explizit, falls die Constraint spaeter anders aussieht.
       const up = await db.from('uploads').delete().not('id', 'is', null);
       if (up.error) return NextResponse.json({ error: up.error.message }, { status: 500 });
+
       const ans = await db.from('answers').delete().not('task_id', 'is', null);
       if (ans.error) return NextResponse.json({ error: ans.error.message }, { status: 500 });
-      const g = await del('guests');
+
+      const g = await db.from('guests').delete().not('id', 'is', null);
       if (g.error) return NextResponse.json({ error: g.error.message }, { status: 500 });
 
       await db

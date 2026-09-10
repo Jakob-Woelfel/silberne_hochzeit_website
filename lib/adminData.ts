@@ -65,7 +65,7 @@ export type ModuleStatus = {
   open: boolean;
 };
 
-export function moduleStatus(now = Date.now(), previewOpen = false): ModuleStatus[] {
+export function moduleStatus(previewOpen = false, now = Date.now()): ModuleStatus[] {
   const labels: Record<ModuleKey, string> = {
     l1: 'Level 1',
     l2: 'Level 2',
