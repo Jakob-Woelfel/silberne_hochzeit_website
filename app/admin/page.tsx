@@ -133,7 +133,7 @@ export default async function AdminDashboard() {
       <section>
         <h2 className="mb-1 text-lg font-semibold">Gäste</h2>
         <p className="mb-3 text-[15px] text-[var(--muted)]">
-          Vollständiges Solo-Ranking. Für Gäste ist das verborgen.
+          Vollständiges Solo-Ranking (Level 1–3 voll, Bingo zur Hälfte). Für Gäste ist das verborgen.
         </p>
         <GuestTable guests={overview.guests} currentGuestId={impersonating} />
       </section>

@@ -14,6 +14,11 @@ export const DEFAULT_ESTIMATE_TIERS: EstimateTiers = [
 export const BINGO_FIELD_POINTS = 10;
 export const BINGO_LINE_POINTS = 20;
 export const BINGO_FULL_POINTS = 50;
+/**
+ * Anteil der Bingo-Punkte, der in den Solo-Score einfließt (Team-Score zählt voll).
+ * Muss zur View solo_ranking passen (supabase/migrations/0005_solo_bingo.sql).
+ */
+export const BINGO_SOLO_FACTOR = 0.5;
 
 export type BingoBonus = { id: string; points: number };
 

@@ -83,7 +83,8 @@ export default async function RankingPage() {
           und liegst auf Platz {standing.rank} von {standing.totalGuests}.
         </p>
         <p className="mt-3 text-[14px] text-[var(--muted)]">
-          Die Solo-Bestenliste wird beim Finale auf der Leinwand gezeigt.
+          Level 1–3 zählen voll, deine Bingo-Punkte zur Hälfte. Die Solo-Bestenliste wird
+          beim Finale auf der Leinwand gezeigt.
         </p>
       </Card>
     </div>

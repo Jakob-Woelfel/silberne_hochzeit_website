@@ -12,6 +12,7 @@ import { getAllAnswers, getGuest } from '@/lib/guest';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { describeSolution } from '@/lib/describeSolution';
 import { describeAnswer } from '@/lib/describeAnswer';
+import { BINGO_SOLO_FACTOR } from '@/lib/scoring';
 import { Countdown } from '@/components/ui/Countdown';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -86,6 +87,18 @@ export default async function SolutionsPage() {
           </section>
         );
       })}
+
+      <Card>
+        <p className="font-semibold">Selfie-Bingo</p>
+        <p className="mt-1 text-[15px] text-[var(--muted)]">
+          {(() => {
+            const bingo = Object.entries(answers)
+              .filter(([id]) => id.startsWith('bingo_'))
+              .reduce((s, [, a]) => s + a.points, 0);
+            return `${bingo} P für dein Team, davon ${Math.floor(bingo * BINGO_SOLO_FACTOR)} P in deinem Solo-Score.`;
+          })()}
+        </p>
+      </Card>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Live-Runde</h2>
