@@ -66,6 +66,11 @@ export default async function HomePage() {
     bingoState = { kind: 'open', done: bingoDone, total: BINGO_SIZE };
   }
 
+  const solutionsState: TileState =
+    isModuleOpen('solutions') || preview
+      ? { kind: 'live', note: 'jetzt ansehen' }
+      : { kind: 'locked', unlockAt: unlockTimestamp('solutions') };
+
   let liveState: TileState;
   if (session.phase === 'idle') {
     liveState = { kind: 'locked', unlockAt: null, note: 'ab 20 Uhr' };
@@ -106,6 +111,13 @@ export default async function HomePage() {
         title="Live-Runde"
         subtitle="Am Abend, alle gleichzeitig"
         state={liveState}
+      />
+
+      <Tile
+        href="/loesungen"
+        title="Auflösung"
+        subtitle="Alle Fragen mit den richtigen Antworten"
+        state={solutionsState}
       />
     </div>
   );

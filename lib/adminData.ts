@@ -72,6 +72,7 @@ export function moduleStatus(previewOpen = false, now = Date.now()): ModuleStatu
     l3: 'Level 3',
     bingo: 'Selfie-Bingo',
     live: 'Live-Runde',
+    solutions: 'Auflösung',
   };
 
   return (Object.keys(labels) as ModuleKey[]).map((key) => {

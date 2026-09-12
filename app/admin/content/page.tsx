@@ -1,6 +1,7 @@
 import { LEVELS, LEVEL_NUMBERS } from '@/content/levels';
 import { SOLUTIONS } from '@/content/levels.solutions';
 import { maxPoints } from '@/lib/scoring';
+import { describeSolution } from '@/lib/describeSolution';
 import type { Solution } from '@/content/solutionTypes';
 import type { Question } from '@/content/types';
 
@@ -134,23 +135,4 @@ function QuestionCard({
       )}
     </div>
   );
-}
-
-function describeSolution(solution: Solution): string {
-  switch (solution.type) {
-    case 'choice':
-      return solution.correct;
-    case 'estimate':
-      return String(solution.correct);
-    case 'text':
-      return solution.accept.join(' oder ');
-    case 'multi':
-      return solution.correct.join(', ');
-    case 'order':
-      return solution.correct.map((s, i) => `${i + 1}. ${s}`).join('  ');
-    case 'zoom':
-      return solution.correct;
-    case 'age':
-      return solution.correct.join(' und ');
-  }
 }

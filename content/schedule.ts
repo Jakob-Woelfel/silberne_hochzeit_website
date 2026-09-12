@@ -3,7 +3,7 @@
  * UNLOCK_ALL=true (Server) bzw. NEXT_PUBLIC_UNLOCK_ALL=true (Client) hebt alle Sperren auf.
  */
 
-export type ModuleKey = 'l1' | 'l2' | 'l3' | 'bingo' | 'live';
+export type ModuleKey = 'l1' | 'l2' | 'l3' | 'bingo' | 'live' | 'solutions';
 
 export const EVENT_DATE = process.env.NEXT_PUBLIC_EVENT_DATE ?? '2026-09-12';
 
@@ -14,6 +14,7 @@ export const UNLOCK_TIMES: Record<ModuleKey, string | null> = {
   l3: '17:00',
   bingo: '12:00',
   live: null, // wird vom Host manuell gestartet
+  solutions: '22:00', // Auflösung: alle Fragen mit Lösungen für alle Gäste
 };
 
 /**
