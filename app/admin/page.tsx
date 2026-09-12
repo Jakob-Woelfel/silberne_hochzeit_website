@@ -14,22 +14,14 @@ import { getGuestId } from '@/lib/guest';
 import { AdminControls } from '@/components/admin/AdminControls';
 import { GuestTable } from '@/components/admin/GuestTable';
 import { DangerZone } from '@/components/admin/DangerZone';
+import { ModuleTable } from '@/components/admin/ModuleTable';
 
 export const dynamic = 'force-dynamic';
-
-function fmtTime(ts: number | null): string {
-  if (ts === null) return '—';
-  return new Intl.DateTimeFormat('de-DE', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    timeZone: 'Europe/Berlin',
-  }).format(ts);
-}
 
 export default async function AdminDashboard() {
   const preview = await isAdminPreview();
   const [db, overview] = await Promise.all([pingDatabase(), loadOverview()]);
-  const modules = moduleStatus(preview);
+  const modulesStatus = await moduleStatus();
   const content = checkContent();
   const orphans = orphanSolutions();
   const warning = hostSecretWarning();
@@ -67,41 +59,11 @@ export default async function AdminDashboard() {
         impersonating={impersonatedGuest?.name ?? null}
       />
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">Freischaltung</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[420px] border-collapse text-left text-[15px]">
-            <thead>
-              <tr className="border-b border-[var(--border)] text-[var(--muted)]">
-                <th className="py-2 pr-4 font-medium">Modul</th>
-                <th className="py-2 pr-4 font-medium">Uhrzeit</th>
-                <th className="py-2 pr-4 font-medium">Öffnet</th>
-                <th className="py-2 font-medium">Zustand</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modules.map((m) => (
-                <tr key={m.key} className="border-b border-[var(--border)]">
-                  <td className="py-2 pr-4">{m.label}</td>
-                  <td className="py-2 pr-4 tabular-nums">{m.time ?? 'per Host'}</td>
-                  <td className="py-2 pr-4 tabular-nums">{fmtTime(m.unlockAt)}</td>
-                  <td className="py-2">
-                    <span
-                      className={
-                        m.open
-                          ? 'rounded-full bg-green-100 px-2.5 py-0.5 text-green-900'
-                          : 'rounded-full bg-[var(--border)] px-2.5 py-0.5 text-[var(--muted)]'
-                      }
-                    >
-                      {m.open ? 'offen' : 'gesperrt'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <ModuleTable
+        modules={modulesStatus.modules}
+        overridesOk={modulesStatus.overridesOk}
+        liveStarted={modulesStatus.liveStarted}
+      />
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Inhalte</h2>

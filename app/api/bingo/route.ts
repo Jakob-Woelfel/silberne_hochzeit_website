@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { getGuestId } from '@/lib/guest';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { bingoFieldsFor } from '@/content/bingo';
-import { isModuleOpen } from '@/lib/unlock';
 import { isAdminPreview } from '@/lib/admin';
-import { liveHasStarted } from '@/lib/live';
+import { loadModuleAccess } from '@/lib/modules';
 import { completeBingoField } from '@/lib/bingo';
 import { SELFIE_BUCKET, selfiePath } from '@/lib/selfies';
 
@@ -42,16 +41,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Feld unbekannt.' }, { status: 404 });
   }
 
-  const preview = await isAdminPreview();
-  if (!isModuleOpen('bingo') && !preview) {
+  if (!(await isAdminPreview()) && !(await loadModuleAccess()).isOpen('bingo')) {
     return NextResponse.json({ error: 'Das Bingo ist gerade nicht offen.' }, { status: 403 });
-  }
-  // Team-Wertung steht mit Beginn der Live-Runde fest (Kickoff 4.1).
-  if (!preview && (await liveHasStarted())) {
-    return NextResponse.json(
-      { error: 'Das Bingo ist seit Beginn der Live-Runde geschlossen.' },
-      { status: 403 },
-    );
   }
 
   const storage = supabaseAdmin().storage.from(SELFIE_BUCKET);

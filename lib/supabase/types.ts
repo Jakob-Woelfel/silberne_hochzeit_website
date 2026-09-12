@@ -79,6 +79,10 @@ export type Database = {
       >;
       session: Table<SessionRow, Partial<SessionRow> & { id: number }>;
       team_bonus: Table<TeamBonus, { team_id: number; points: number; note?: string | null; updated_at?: string }>;
+      module_overrides: Table<
+        { key: string; state: 'open' | 'closed'; updated_at: string },
+        { key: string; state: 'open' | 'closed'; updated_at?: string }
+      >;
     };
     Views: {
       solo_ranking: View<SoloRankingRow>;

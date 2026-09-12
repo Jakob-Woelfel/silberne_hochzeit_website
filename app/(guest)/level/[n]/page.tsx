@@ -2,9 +2,8 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { LEVELS, isLevelNumber } from '@/content/levels';
 import { unlockTimestamp, type ModuleKey } from '@/content/schedule';
-import { isModuleOpen } from '@/lib/unlock';
 import { isAdminPreview } from '@/lib/admin';
-import { liveHasStarted } from '@/lib/live';
+import { loadModuleAccess } from '@/lib/modules';
 import { getAnswersForPrefix, getGuest } from '@/lib/guest';
 import { Countdown } from '@/components/ui/Countdown';
 import { Card } from '@/components/ui/Card';
@@ -25,7 +24,11 @@ export default async function LevelPage({ params }: PageProps<'/level/[n]'>) {
   const level = LEVELS[num];
   const key = `l${num}` as ModuleKey;
 
-  if (!isModuleOpen(key) && !(await isAdminPreview())) {
+  const preview = await isAdminPreview();
+  const access = await loadModuleAccess();
+  const reason = preview ? 'open' : access.reason(key);
+
+  if (reason === 'not_yet') {
     const target = unlockTimestamp(key);
     return (
       <div className="flex flex-col gap-5">
@@ -67,14 +70,14 @@ export default async function LevelPage({ params }: PageProps<'/level/[n]'>) {
     saved[taskId] = { value: row.value as AnswerValue, points: row.points };
   }
 
-  const closed = !(await isAdminPreview()) && (await liveHasStarted());
+  const closed = reason === 'closed';
 
   return (
     <LevelPlayer
       title={level.title}
       questions={level.questions}
       saved={saved}
-      closedNote={closed ? 'Seit Beginn der Live-Runde sind die Level geschlossen.' : null}
+      closedNote={closed ? 'Dieses Level ist geschlossen, neue Antworten gehen nicht mehr.' : null}
     />
   );
 }

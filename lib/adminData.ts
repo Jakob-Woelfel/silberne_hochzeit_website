@@ -7,6 +7,7 @@ import { maxPoints } from '@/lib/scoring';
 import { TEAMS } from '@/content/teams';
 import { UNLOCK_TIMES, unlockTimestamp, type ModuleKey } from '@/content/schedule';
 import { unlockAll } from '@/lib/unlock';
+import { CONTROLLABLE_MODULES, loadModuleAccess, type ModuleReason, type Override } from '@/lib/modules';
 import type { Guest, SoloRankingRow, TeamRankingRow } from '@/lib/supabase/types';
 
 /** Alles, was das Admin-Dashboard anzeigt. Nur Server. */
@@ -62,10 +63,19 @@ export type ModuleStatus = {
   label: string;
   time: string | null;
   unlockAt: number | null;
-  open: boolean;
+  /** was Gäste gerade sehen (Override, Zeitplan, Live-Schließung) */
+  reason: ModuleReason;
+  /** manueller Override, falls gesetzt */
+  override: Override | null;
+  /** lässt sich im Dashboard umschalten */
+  controllable: boolean;
 };
 
-export function moduleStatus(previewOpen = false, now = Date.now()): ModuleStatus[] {
+export async function moduleStatus(now = Date.now()): Promise<{
+  modules: ModuleStatus[];
+  overridesOk: boolean;
+  liveStarted: boolean;
+}> {
   const labels: Record<ModuleKey, string> = {
     l1: 'Level 1',
     l2: 'Level 2',
@@ -74,13 +84,24 @@ export function moduleStatus(previewOpen = false, now = Date.now()): ModuleStatu
     live: 'Live-Runde',
     solutions: 'Auflösung',
   };
+  const access = await loadModuleAccess();
 
-  return (Object.keys(labels) as ModuleKey[]).map((key) => {
-    const unlockAt = unlockTimestamp(key);
-    const open =
-      previewOpen || unlockAll() || (unlockAt !== null && now >= unlockAt);
-    return { key, label: labels[key], time: UNLOCK_TIMES[key], unlockAt, open };
-  });
+  const modules = (Object.keys(labels) as ModuleKey[]).map((key) => ({
+    key,
+    label: labels[key],
+    time: UNLOCK_TIMES[key],
+    unlockAt: unlockTimestamp(key),
+    reason:
+      key === 'live'
+        ? ((access.liveStarted ? 'open' : 'not_yet') as ModuleReason)
+        : unlockAll() && !access.overrides[key]
+          ? ('open' as ModuleReason)
+          : access.reason(key, now),
+    override: access.overrides[key] ?? null,
+    controllable: CONTROLLABLE_MODULES.includes(key),
+  }));
+
+  return { modules, overridesOk: access.migrationOk, liveStarted: access.liveStarted };
 }
 
 export type AdminGuest = Guest & {

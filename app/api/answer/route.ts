@@ -4,9 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { questionById } from '@/content/levels';
 import { solutionFor } from '@/content/levels.solutions';
 import { isFinalAnswer, normalizeText, score } from '@/lib/scoring';
-import { isTaskOpen } from '@/lib/unlock';
 import { isAdminPreview } from '@/lib/admin';
-import { liveHasStarted } from '@/lib/live';
+import { loadModuleAccess } from '@/lib/modules';
+import { moduleOfTask } from '@/content/schedule';
 import type { AnswerValue } from '@/content/types';
 
 export const dynamic = 'force-dynamic';
@@ -40,19 +40,19 @@ export async function POST(request: Request) {
   }
 
   // Der Admin-Vorschaumodus hebt die Sperre nur fuer diesen Browser auf.
-  const preview = await isAdminPreview();
-  if (!isTaskOpen(taskId) && !preview) {
-    return NextResponse.json(
-      { error: 'Diese Aufgabe ist noch nicht freigeschaltet.' },
-      { status: 403 },
-    );
-  }
-  // Mit der Live-Runde sind die Level zu (Kickoff 4.1).
-  if (!preview && (await liveHasStarted())) {
-    return NextResponse.json(
-      { error: 'Die Level sind seit Beginn der Live-Runde geschlossen.' },
-      { status: 403 },
-    );
+  if (!(await isAdminPreview())) {
+    const access = await loadModuleAccess();
+    const key = moduleOfTask(taskId);
+    const reason = key ? access.reason(key) : 'closed';
+    if (reason === 'not_yet') {
+      return NextResponse.json(
+        { error: 'Diese Aufgabe ist noch nicht freigeschaltet.' },
+        { status: 403 },
+      );
+    }
+    if (reason === 'closed') {
+      return NextResponse.json({ error: 'Dieses Level ist geschlossen.' }, { status: 403 });
+    }
   }
 
   const value = body.value as AnswerValue;

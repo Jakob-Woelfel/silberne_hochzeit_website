@@ -6,8 +6,8 @@ import { SOLUTIONS } from '@/content/levels.solutions';
 import { LIVE_QUESTIONS, liveHeading } from '@/content/live';
 import { LIVE_SOLUTIONS } from '@/content/live.solutions';
 import { unlockTimestamp } from '@/content/schedule';
-import { isModuleOpen } from '@/lib/unlock';
 import { isAdminPreview } from '@/lib/admin';
+import { loadModuleAccess } from '@/lib/modules';
 import { getAllAnswers, getGuest } from '@/lib/guest';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { describeSolution } from '@/lib/describeSolution';
@@ -27,7 +27,7 @@ export default async function SolutionsPage() {
   const guest = await getGuest();
   if (!guest) redirect('/start');
 
-  if (!isModuleOpen('solutions') && !(await isAdminPreview())) {
+  if (!(await isAdminPreview()) && !(await loadModuleAccess()).isOpen('solutions')) {
     const target = unlockTimestamp('solutions');
     return (
       <div className="flex flex-col gap-5">

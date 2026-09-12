@@ -11,6 +11,8 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { LIVE_BASE_POINTS, isFinaleSlide, liveQuestionById } from '@/content/live';
 import { liveSolutionFor } from '@/content/live.solutions';
 import { loadSession, rescoreEither, writeLiveBonus } from '@/lib/live';
+import { CONTROLLABLE_MODULES } from '@/lib/modules';
+import type { ModuleKey } from '@/content/schedule';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +27,7 @@ type Action =
   | { action: 'renameGuest'; guestId: string; name: string }
   | { action: 'setTeam'; guestId: string; teamId: number }
   | { action: 'resetAll'; confirm: string }
+  | { action: 'setModule'; key: string; state: 'auto' | 'open' | 'closed' }
   // Live-Session (Host-Steuerung, Kickoff 4.4)
   | { action: 'liveLobby' }
   | { action: 'liveStart'; questionId: string }
@@ -181,6 +184,29 @@ export async function POST(request: Request) {
       const res = NextResponse.json({ ok: true });
       res.cookies.set(GUEST_COOKIE, '', { path: '/', maxAge: 0 });
       return res;
+    }
+
+    case 'setModule': {
+      // Manuelle Freischaltung: 'auto' = Zeitplan, sonst fester Zustand für alle Gäste.
+      if (!CONTROLLABLE_MODULES.includes(body.key as ModuleKey)) {
+        return NextResponse.json({ error: 'Modul unbekannt.' }, { status: 400 });
+      }
+      if (!['auto', 'open', 'closed'].includes(body.state)) {
+        return NextResponse.json({ error: 'Ungültiger Zustand.' }, { status: 400 });
+      }
+      const { error } =
+        body.state === 'auto'
+          ? await db.from('module_overrides').delete().eq('key', body.key)
+          : await db
+              .from('module_overrides')
+              .upsert({ key: body.key, state: body.state, updated_at: new Date().toISOString() });
+      if (error) {
+        return NextResponse.json(
+          { error: `Nicht gespeichert (0004_module_overrides.sql ausgeführt?): ${error.message}` },
+          { status: 500 },
+        );
+      }
+      return NextResponse.json({ ok: true });
     }
 
     // ── Live-Session ────────────────────────────────────────────────────────
