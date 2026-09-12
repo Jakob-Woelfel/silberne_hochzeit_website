@@ -9,9 +9,9 @@ export const EVENT_DATE = process.env.NEXT_PUBLIC_EVENT_DATE ?? '2026-09-12';
 
 /** Lokale Uhrzeit in Europe/Berlin. */
 export const UNLOCK_TIMES: Record<ModuleKey, string | null> = {
-  l1: '12:00',
-  l2: '14:00',
-  l3: '17:00',
+  l1: '18:00',
+  l2: '18:15',
+  l3: '18:30',
   bingo: '12:00',
   live: null, // wird vom Host manuell gestartet
   solutions: '22:00', // Auflösung: alle Fragen mit Lösungen für alle Gäste

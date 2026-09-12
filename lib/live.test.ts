@@ -37,10 +37,9 @@ describe('Live-Fragen und Lösungen', () => {
     }
   });
 
-  it('Kickoff 12.7: mindestens 6 Zitate, 6 „Wer würde eher“, 2 Menti', () => {
+  it('Kickoff 12.7: mindestens 6 Zitate und 6 „Wer würde eher“', () => {
     const count = (t: string) => LIVE_QUESTIONS.filter((q) => q.type === t).length;
     expect(count('quote')).toBeGreaterThanOrEqual(6);
     expect(count('either')).toBeGreaterThanOrEqual(6);
-    expect(count('menti')).toBeGreaterThanOrEqual(2);
   });
 });

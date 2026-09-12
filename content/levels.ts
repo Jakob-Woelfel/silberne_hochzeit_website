@@ -22,14 +22,6 @@ export const LEVELS: Record<1 | 2 | 3, { title: string; subtitle: string; questi
     title: 'Level 1',
     subtitle: 'Die Hochzeit 2001',
     questions: [
-      // ── l1_q1 · Katrins Alter ────────────────────────────────────────────
-      {
-        id: 'l1_q1',
-        type: 'choice',
-        prompt: 'Wie alt war Katrin bei der Hochzeit?',
-        options: ['22', '24', '26', '28'],
-      },
-
       // ── l1_q2 · Kennenlernen ─────────────────────────────────────────────
       {
         id: 'l1_q2',
@@ -199,6 +191,16 @@ export const LEVELS: Record<1 | 2 | 3, { title: string; subtitle: string; questi
         options: ['Jakob', 'Bernd', 'Klaus', 'Katrin'],
       },
 
+      // ── l3_q3 · Zoom 3 ───────────────────────────────────────────────────
+      {
+        id: 'l3_q3',
+        type: 'zoom',
+        prompt: 'Wer ist das?',
+        hint: 'Drei Stufen, pro Stufe ein Tipp. Je früher du richtig liegst, desto mehr Punkte.',
+        image: 'zoom3',
+        options: ['Petra', 'Maria', 'Katrin', 'Jakob'],
+      },
+
       // ── l3_q4 · Alter 1 ──────────────────────────────────────────────────
       {
         id: 'l3_q4',
@@ -233,6 +235,15 @@ export const LEVELS: Record<1 | 2 | 3, { title: string; subtitle: string; questi
         prompt: 'Wie alt sind die beiden auf diesem Foto?',
         image: 'age4',
         people: ['Bernd', 'Katrin'],
+      },
+
+      // ── l3_q8 · Alter 5 ──────────────────────────────────────────────────
+      {
+        id: 'l3_q8',
+        type: 'age',
+        prompt: 'Wie alt ist Katrin auf diesem Foto?',
+        image: 'age5',
+        people: ['Katrin'],
       },
     ],
   },

@@ -24,7 +24,6 @@ export const LIVE_SOLUTIONS: Record<string, Parent> = {
   live_q7: 'Bernd', // letztes Stück Kuchen
   live_q8: 'Bernd', // Schlüssel suchen
   live_q9: 'Katrin', // als Letzte nach Hause
-  live_q10: 'Katrin', // Hunde-Kotze
   live_q11: 'Katrin', // Shampoo-Flaschen
   live_q12: 'Bernd', // Kühlschrank plündern
   live_q13: 'Katrin', // falsche Gruppe

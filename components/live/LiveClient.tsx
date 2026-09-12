@@ -134,8 +134,7 @@ function Idle() {
       <Card>
         <p className="text-lg font-semibold">Noch nicht gestartet</p>
         <p className="mt-1 text-[var(--muted)]">
-          Am Abend spielen alle gleichzeitig: Zitate zuordnen, „Wer würde eher …“ und ein
-          paar Fragen an euch. Sobald es losgeht, erscheint hier die erste Frage – die Seite
+          Am Abend spielen alle gleichzeitig: Zitate zuordnen und „Wer würde eher …“. Sobald es losgeht, erscheint hier die erste Frage – die Seite
           aktualisiert sich von selbst.
         </p>
       </Card>

@@ -45,9 +45,6 @@ const AGE_TIERS: EstimateTiers = [
 ];
 
 export const SOLUTIONS: Record<string, Solution> = {
-  // ── l1_q1 · Katrins Alter ──────────────────────────────────────────────
-  l1_q1: { type: 'choice', correct: '24' },
-
   // ── l1_q2 · Kennenlernen ───────────────────────────────────────────────
   l1_q2: { type: 'choice', correct: 'Im Schwimmverein' },
 
@@ -96,6 +93,9 @@ export const SOLUTIONS: Record<string, Solution> = {
   // ── l3_q2 · Zoom 2 ─────────────────────────────────────────────────────
   l3_q2: { type: 'zoom', correct: 'Bernd' },
 
+  // ── l3_q3 · Zoom 3 ─────────────────────────────────────────────────────
+  l3_q3: { type: 'zoom', correct: 'Katrin' },
+
   // ── l3_q4 · Alter 1 ────────────────────────────────────────────────────
   l3_q4: { type: 'age', correct: [17], tiers: AGE_TIERS },
 
@@ -107,6 +107,9 @@ export const SOLUTIONS: Record<string, Solution> = {
 
   // ── l3_q7 · Alter 4 ────────────────────────────────────────────────────
   l3_q7: { type: 'age', correct: [46, 40], tiers: AGE_TIERS },
+
+  // ── l3_q8 · Alter 5 ────────────────────────────────────────────────────
+  l3_q8: { type: 'age', correct: [6], tiers: AGE_TIERS },
 };
 
 export function solutionFor(taskId: string): Solution | undefined {

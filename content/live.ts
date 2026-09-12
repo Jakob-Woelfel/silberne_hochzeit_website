@@ -109,13 +109,6 @@ export const LIVE_QUESTIONS: LiveQuestion[] = [
     options: parents(),
   },
   {
-    id: 'live_q10',
-    type: 'either',
-    prompt:
-      '… so tun, als hätte man die Kotze der Hunde nicht gesehen – in der Hoffnung, dass es jemand anderes wegmacht?',
-    options: parents(),
-  },
-  {
     id: 'live_q11',
     type: 'either',
     prompt: '… im Hotel die kleinen Shampoo-Flaschen mitnehmen?',
@@ -146,19 +139,8 @@ export const LIVE_QUESTIONS: LiveQuestion[] = [
     options: parents(),
   },
 
-  // ── Menti: keine Punkte, nur Anzeige auf dem Beamer ──────────────────────
-  {
-    id: 'live_q16',
-    type: 'menti',
-    prompt: 'Ein Wort, das Bernd und Katrin als Paar beschreibt:',
-    placeholder: 'z. B. unzertrennlich',
-  },
-  {
-    id: 'live_q17',
-    type: 'menti',
-    prompt: 'Wohin sollen die beiden in den nächsten 25 Jahren unbedingt reisen?',
-    placeholder: 'z. B. Neuseeland',
-  },
+  // Menti-Fragen (Freitext, Wortwolke auf dem Beamer) sind technisch weiter
+  // möglich – aktuell bewusst keine im Ablauf.
 ];
 
 export function liveQuestionById(id: string | null | undefined): LiveQuestion | undefined {

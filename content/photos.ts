@@ -25,6 +25,8 @@ export type AgePhoto = { id: string; source: string };
 export const ZOOM_PHOTOS: ZoomPhoto[] = [
   { id: 'zoom1', source: 'zoom_1_katrin.jpg', focus: { x: 0.3, y: 0.15 }, steps: [1 / 18, 1 / 5, 1] },
   { id: 'zoom2', source: 'zoom_2_bernd.jpeg', focus: { x: 0.62, y: 0.6 } },
+  // Katrin als Kind in Latzhose, Gesicht rechts der Mitte
+  { id: 'zoom3', source: 'zoom_3_katrin.jpeg', focus: { x: 0.61, y: 0.555 } },
 ];
 
 export const AGE_PHOTOS: AgePhoto[] = [
@@ -32,6 +34,7 @@ export const AGE_PHOTOS: AgePhoto[] = [
   { id: 'age2', source: 'age_2_both_bernd25_Katrin19.jpeg' },
   { id: 'age3', source: 'age_3_both_bernd26_katrin20.jpeg' },
   { id: 'age4', source: 'age_4_both_bernd46_katrin_40.jpeg' },
+  { id: 'age5', source: 'age_5_katrin_6.jpeg' },
 ];
 
 /** Breite von Stufe 1/2/3 als Bruchteil der Originalbreite. */
