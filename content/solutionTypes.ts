@@ -9,4 +9,4 @@ export type Solution =
   | { type: 'multi'; correct: string[]; perHit?: number; perMiss?: number }
   | { type: 'order'; correct: string[]; perPosition?: number }
   | { type: 'zoom'; correct: string }
-  | { type: 'age'; correct: [number, number]; tiers?: EstimateTiers };
+  | { type: 'age'; correct: number[]; tiers?: EstimateTiers };

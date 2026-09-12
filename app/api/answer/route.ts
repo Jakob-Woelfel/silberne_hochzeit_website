@@ -3,7 +3,7 @@ import { getGuestId } from '@/lib/guest';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { questionById } from '@/content/levels';
 import { solutionFor } from '@/content/levels.solutions';
-import { score } from '@/lib/scoring';
+import { isFinalAnswer, normalizeText, score } from '@/lib/scoring';
 import { isTaskOpen } from '@/lib/unlock';
 import { isAdminPreview } from '@/lib/admin';
 import type { AnswerValue } from '@/content/types';
@@ -51,8 +51,67 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Antwortformat passt nicht.' }, { status: 400 });
   }
 
-  const points = score(question, solution, value);
+  if (
+    question.type === 'age' &&
+    value.type === 'age' &&
+    (!Array.isArray(value.numbers) || value.numbers.length !== question.people.length)
+  ) {
+    return NextResponse.json({ error: 'Antwortformat passt nicht.' }, { status: 400 });
+  }
+
   const db = supabaseAdmin();
+
+  // Zoom: drei Versuche, die Zeile wird pro Tipp fortgeschrieben statt einmal eingefügt.
+  if (question.type === 'zoom' && value.type === 'zoom') {
+    const { data: existing } = await db
+      .from('answers')
+      .select('value, points')
+      .eq('guest_id', guestId)
+      .eq('task_id', taskId)
+      .maybeSingle();
+
+    const stored = (existing?.value as AnswerValue | null) ?? null;
+    const storedGuesses = stored?.type === 'zoom' ? stored.guesses : [];
+
+    if (existing && stored && isFinalAnswer(stored, existing.points)) {
+      return NextResponse.json(
+        { error: 'Diese Frage hast du schon beantwortet.', value: stored, points: existing.points },
+        { status: 409 },
+      );
+    }
+
+    // Der Server hängt genau einen Tipp an – der Client kann Stufen weder
+    // überspringen noch zurücksetzen.
+    const guess = value.guesses?.at(-1);
+    const validOption =
+      typeof guess === 'string' &&
+      question.options.some((o) => normalizeText(o) === normalizeText(guess));
+    const alreadyTried =
+      typeof guess === 'string' &&
+      storedGuesses.some((g) => normalizeText(g) === normalizeText(guess));
+    if (!validOption || alreadyTried) {
+      return NextResponse.json({ error: 'Ungültiger Tipp.' }, { status: 400 });
+    }
+
+    const next: AnswerValue = { type: 'zoom', guesses: [...storedGuesses, guess] };
+    const points = score(question, solution, next);
+
+    const { error } = await db
+      .from('answers')
+      .upsert({ guest_id: guestId, task_id: taskId, value: next, points });
+
+    if (error) {
+      console.error('zoom upsert failed', error);
+      return NextResponse.json(
+        { error: 'Speichern fehlgeschlagen. Bitte noch einmal versuchen.' },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ points, value: next, final: isFinalAnswer(next, points) });
+  }
+
+  const points = score(question, solution, value);
 
   const { error } = await db
     .from('answers')
@@ -85,5 +144,5 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ points, value });
+  return NextResponse.json({ points, value, final: true });
 }

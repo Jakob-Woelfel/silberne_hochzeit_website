@@ -23,6 +23,9 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
           <Link href="/admin/content" className="text-[15px] text-[var(--muted)]">
             Inhalte
           </Link>
+          <Link href="/screen/gallery" className="text-[15px] text-[var(--muted)]">
+            Selfie-Galerie
+          </Link>
           <Link href="/home" className="text-[15px] text-[var(--muted)]">
             Gast-Ansicht
           </Link>

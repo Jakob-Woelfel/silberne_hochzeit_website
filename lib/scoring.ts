@@ -10,6 +10,47 @@ export const DEFAULT_ESTIMATE_TIERS: EstimateTiers = [
   { within: 0.5, points: 5 },
 ];
 
+/** Bingo (Kickoff 4.2, Team-Wertung): Feld, volle Reihe/Spalte, komplettes Grid. */
+export const BINGO_FIELD_POINTS = 10;
+export const BINGO_LINE_POINTS = 20;
+export const BINGO_FULL_POINTS = 50;
+
+export type BingoBonus = { id: string; points: number };
+
+/**
+ * Welche Boni stehen einem Gast mit den erledigten Feldern zu?
+ * `grid` = Feld-IDs zeilenweise. Bonus-IDs tragen das Präfix `bingo_`, damit die
+ * Team-View sie mitzählt, und sind stabil, damit sie nur einmal vergeben werden.
+ */
+export function bingoBonuses(doneIds: Iterable<string>, grid: string[][]): BingoBonus[] {
+  const done = new Set(doneIds);
+  const bonuses: BingoBonus[] = [];
+  const all = grid.flat();
+  if (all.length === 0) return bonuses;
+
+  grid.forEach((row, r) => {
+    if (row.length > 0 && row.every((id) => done.has(id))) {
+      bonuses.push({ id: `bingo_row_${r + 1}`, points: BINGO_LINE_POINTS });
+    }
+  });
+
+  const cols = Math.max(...grid.map((row) => row.length));
+  for (let c = 0; c < cols; c++) {
+    const col = grid.map((row) => row[c]).filter((id): id is string => id !== undefined);
+    if (col.length === grid.length && col.every((id) => done.has(id))) {
+      bonuses.push({ id: `bingo_col_${c + 1}`, points: BINGO_LINE_POINTS });
+    }
+  }
+
+  if (all.every((id) => done.has(id))) {
+    bonuses.push({ id: 'bingo_full', points: BINGO_FULL_POINTS });
+  }
+  return bonuses;
+}
+
+/** Punkte je Zoomstufe (Kickoff 4.2): Stufe 1 = 30, Stufe 2 = 20, Stufe 3 = 10. */
+export const ZOOM_POINTS = [30, 20, 10] as const;
+
 export function normalizeText(s: string): string {
   return s
     .trim()
@@ -94,20 +135,34 @@ export function score(
     }
 
     case 'zoom': {
+      // Nur der letzte Tipp zählt, die Stufe ergibt sich aus der Anzahl der Tipps.
       const v = value as Extract<AnswerValue, { type: 'zoom' }>;
-      if (normalizeText(v.option) !== normalizeText(solution.correct)) return 0;
-      return { 1: 30, 2: 20, 3: 10 }[v.step] ?? 0;
+      const guesses = v.guesses ?? [];
+      const step = guesses.length;
+      const last = guesses[step - 1];
+      if (last === undefined || normalizeText(last) !== normalizeText(solution.correct)) return 0;
+      return ZOOM_POINTS[step - 1] ?? 0;
     }
 
     case 'age': {
       const v = value as Extract<AnswerValue, { type: 'age' }>;
-      const [a, b] = v.numbers ?? [NaN, NaN];
-      return (
-        estimatePoints(a, solution.correct[0], solution.tiers) +
-        estimatePoints(b, solution.correct[1], solution.tiers)
+      const numbers = v.numbers ?? [];
+      return solution.correct.reduce(
+        (sum, correct, i) => sum + estimatePoints(numbers[i] ?? NaN, correct, solution.tiers),
+        0,
       );
     }
   }
+}
+
+/**
+ * Ist die Antwort endgültig? Zoom-Fragen bleiben offen, bis ein Tipp stimmt
+ * oder alle drei Stufen verbraucht sind. Alles andere ist mit dem ersten
+ * Speichern erledigt.
+ */
+export function isFinalAnswer(value: AnswerValue, points: number): boolean {
+  if (value.type !== 'zoom') return true;
+  return points > 0 || (value.guesses ?? []).length >= ZOOM_POINTS.length;
 }
 
 /** Maximal erreichbare Punkte – für Fortschrittsanzeigen. */
@@ -124,8 +179,11 @@ export function maxPoints(solution: Solution): number {
     case 'order':
       return (solution.perPosition ?? 5) * solution.correct.length;
     case 'zoom':
-      return 30;
+      return ZOOM_POINTS[0];
     case 'age':
-      return 2 * Math.max(...(solution.tiers ?? DEFAULT_ESTIMATE_TIERS).map((t) => t.points));
+      return (
+        solution.correct.length *
+        Math.max(...(solution.tiers ?? DEFAULT_ESTIMATE_TIERS).map((t) => t.points))
+      );
   }
 }

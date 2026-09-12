@@ -1,22 +1,32 @@
 'use client';
 
 import type { AnswerValue, Question } from '@/content/types';
+import { ZOOM_POINTS } from '@/lib/scoring';
+import { AgeQuestion } from './AgeQuestion';
 import { ChoiceQuestion } from './ChoiceQuestion';
 import { EstimateQuestion } from './EstimateQuestion';
 import { MultiQuestion } from './MultiQuestion';
 import { OrderQuestion } from './OrderQuestion';
 import { TextQuestion } from './TextQuestion';
+import { ZoomQuestion } from './ZoomQuestion';
 
 export type QuestionInputProps = {
   question: Question;
+  /** aktueller Entwurf bzw. die gespeicherte Antwort, wenn gesperrt */
   value: AnswerValue | null;
+  /** bereits gespeicherter Stand – nur für Typen mit mehreren Versuchen (zoom) */
+  saved?: AnswerValue | null;
   onChange: (value: AnswerValue) => void;
   disabled?: boolean;
 };
 
 /** Typ -> Eingabekomponente. Neue Aufgabentypen kommen hier dazu. */
-export function QuestionInput({ question, ...rest }: QuestionInputProps) {
+export function QuestionInput({ question, saved, ...rest }: QuestionInputProps) {
   switch (question.type) {
+    case 'zoom':
+      return <ZoomQuestion question={question} saved={saved} {...rest} />;
+    case 'age':
+      return <AgeQuestion question={question} {...rest} />;
     case 'choice':
       return <ChoiceQuestion question={question} {...rest} />;
     case 'multi':
@@ -36,10 +46,24 @@ export function QuestionInput({ question, ...rest }: QuestionInputProps) {
   }
 }
 
-/** Ist die Eingabe vollständig genug zum Absenden? */
-export function isComplete(question: Question, value: AnswerValue | null): boolean {
+/** Ist die Eingabe vollständig genug zum Absenden? `saved` = gespeicherter Stand (zoom). */
+export function isComplete(
+  question: Question,
+  value: AnswerValue | null,
+  saved?: AnswerValue | null,
+): boolean {
   if (!value) return false;
   switch (value.type) {
+    case 'zoom': {
+      const tried = saved?.type === 'zoom' ? saved.guesses.length : 0;
+      return value.guesses.length === tried + 1 && tried < ZOOM_POINTS.length;
+    }
+    case 'age':
+      return (
+        question.type === 'age' &&
+        value.numbers.length === question.people.length &&
+        value.numbers.every((n) => Number.isFinite(n))
+      );
     case 'choice':
       return value.option.length > 0;
     case 'text':
@@ -70,6 +94,12 @@ export function describeAnswer(value: AnswerValue): string {
       return value.options.join(', ') || '–';
     case 'order':
       return value.items.map((item, i) => `${i + 1}. ${item}`).join('  ·  ');
+    case 'zoom':
+      return value.guesses.length === 0
+        ? '–'
+        : `${value.guesses.length}. Tipp: ${value.guesses[value.guesses.length - 1]}`;
+    case 'age':
+      return value.numbers.map((n) => (Number.isFinite(n) ? String(n) : '–')).join(' und ');
     default:
       return '–';
   }

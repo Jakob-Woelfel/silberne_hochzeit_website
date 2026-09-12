@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maxPoints, normalizeText, score } from './scoring';
+import { bingoBonuses, isFinalAnswer, maxPoints, normalizeText, score } from './scoring';
 import type { Question } from '@/content/types';
 import type { Solution } from '@/content/solutionTypes';
 
@@ -108,13 +108,27 @@ describe('order', () => {
 describe('zoom', () => {
   const sol: Solution = { type: 'zoom', correct: 'Oma Helga' };
   it('30 Punkte auf Stufe 1', () => {
-    expect(score(q('zoom'), sol, { type: 'zoom', option: 'Oma Helga', step: 1 })).toBe(30);
+    expect(score(q('zoom'), sol, { type: 'zoom', guesses: ['Oma Helga'] })).toBe(30);
+  });
+  it('20 Punkte auf Stufe 2', () => {
+    expect(score(q('zoom'), sol, { type: 'zoom', guesses: ['Opa Karl', 'Oma Helga'] })).toBe(20);
   });
   it('10 Punkte auf Stufe 3', () => {
-    expect(score(q('zoom'), sol, { type: 'zoom', option: 'Oma Helga', step: 3 })).toBe(10);
+    expect(
+      score(q('zoom'), sol, { type: 'zoom', guesses: ['Opa Karl', 'Tante Ute', 'Oma Helga'] }),
+    ).toBe(10);
   });
   it('0 bei falscher Person', () => {
-    expect(score(q('zoom'), sol, { type: 'zoom', option: 'Opa Karl', step: 1 })).toBe(0);
+    expect(score(q('zoom'), sol, { type: 'zoom', guesses: ['Opa Karl'] })).toBe(0);
+  });
+  it('0, wenn ein früherer Tipp richtig war, aber der letzte nicht', () => {
+    expect(score(q('zoom'), sol, { type: 'zoom', guesses: ['Oma Helga', 'Opa Karl'] })).toBe(0);
+  });
+  it('0 ohne Tipp oder jenseits von Stufe 3', () => {
+    expect(score(q('zoom'), sol, { type: 'zoom', guesses: [] })).toBe(0);
+    expect(
+      score(q('zoom'), sol, { type: 'zoom', guesses: ['A', 'B', 'C', 'Oma Helga'] }),
+    ).toBe(0);
   });
 });
 
@@ -125,6 +139,38 @@ describe('age', () => {
   });
   it('wertet jede Person einzeln', () => {
     expect(score(q('age'), sol, { type: 'age', numbers: [24, 40] })).toBe(20);
+  });
+  it('funktioniert mit einer Person', () => {
+    const one: Solution = { type: 'age', correct: [30] };
+    expect(score(q('age'), one, { type: 'age', numbers: [31] })).toBe(20);
+  });
+  it('fehlende Zahl gibt 0 für diese Person', () => {
+    expect(score(q('age'), sol, { type: 'age', numbers: [24] })).toBe(20);
+  });
+  it('respektiert eigene Staffel', () => {
+    const half: Solution = {
+      type: 'age',
+      correct: [24, 22],
+      tiers: [{ within: 0.05, points: 10 }],
+    };
+    expect(score(q('age'), half, { type: 'age', numbers: [24, 22] })).toBe(20);
+  });
+});
+
+describe('isFinalAnswer', () => {
+  it('alles außer zoom ist sofort final', () => {
+    expect(isFinalAnswer({ type: 'choice', option: 'A' }, 0)).toBe(true);
+    expect(isFinalAnswer({ type: 'estimate', number: 3 }, 0)).toBe(true);
+  });
+  it('zoom ist final bei Treffer', () => {
+    expect(isFinalAnswer({ type: 'zoom', guesses: ['A'] }, 30)).toBe(true);
+  });
+  it('zoom bleibt offen nach Fehlversuch', () => {
+    expect(isFinalAnswer({ type: 'zoom', guesses: ['A'] }, 0)).toBe(false);
+    expect(isFinalAnswer({ type: 'zoom', guesses: ['A', 'B'] }, 0)).toBe(false);
+  });
+  it('zoom ist final nach drei Fehlversuchen', () => {
+    expect(isFinalAnswer({ type: 'zoom', guesses: ['A', 'B', 'C'] }, 0)).toBe(true);
   });
 });
 
@@ -143,4 +189,43 @@ describe('maxPoints', () => {
   it('order', () => expect(maxPoints({ type: 'order', correct: ['A', 'B'] })).toBe(10));
   it('zoom', () => expect(maxPoints({ type: 'zoom', correct: 'A' })).toBe(30));
   it('age', () => expect(maxPoints({ type: 'age', correct: [1, 2] })).toBe(40));
+  it('age mit einer Person', () => expect(maxPoints({ type: 'age', correct: [1] })).toBe(20));
+});
+
+describe('bingoBonuses', () => {
+  const grid = [
+    ['a', 'b', 'c'],
+    ['d', 'e', 'f'],
+    ['g', 'h', 'i'],
+  ];
+  it('nichts ohne volle Linie', () => {
+    expect(bingoBonuses(['a', 'b', 'd'], grid)).toEqual([]);
+  });
+  it('Reihe', () => {
+    expect(bingoBonuses(['a', 'b', 'c'], grid)).toEqual([{ id: 'bingo_row_1', points: 20 }]);
+  });
+  it('Spalte', () => {
+    expect(bingoBonuses(['b', 'e', 'h'], grid)).toEqual([{ id: 'bingo_col_2', points: 20 }]);
+  });
+  it('keine Diagonale', () => {
+    expect(bingoBonuses(['a', 'e', 'i'], grid)).toEqual([]);
+  });
+  it('alles: alle Reihen, alle Spalten und Vollbonus', () => {
+    const ids = bingoBonuses(grid.flat(), grid).map((b) => b.id);
+    expect(ids).toEqual([
+      'bingo_row_1',
+      'bingo_row_2',
+      'bingo_row_3',
+      'bingo_col_1',
+      'bingo_col_2',
+      'bingo_col_3',
+      'bingo_full',
+    ]);
+  });
+  it('ignoriert unbekannte IDs', () => {
+    expect(bingoBonuses(['x', 'a', 'b', 'c'], grid)).toEqual([{ id: 'bingo_row_1', points: 20 }]);
+  });
+  it('leeres Grid', () => {
+    expect(bingoBonuses(['a'], [])).toEqual([]);
+  });
 });

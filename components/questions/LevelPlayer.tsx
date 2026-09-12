@@ -7,8 +7,13 @@ import type { AnswerValue, Question } from '@/content/types';
 import { Button } from '@/components/ui/Button';
 import { Progress } from '@/components/ui/Progress';
 import { QuestionInput, describeAnswer, isComplete } from '@/components/questions';
+import { isFinalAnswer } from '@/lib/scoring';
 
 export type SavedAnswer = { value: AnswerValue; points: number };
+
+/** Endgültig beantwortet? Zoom-Fragen bleiben nach Fehlversuchen offen. */
+const isDone = (a: SavedAnswer | undefined) =>
+  a !== undefined && isFinalAnswer(a.value, a.points);
 
 export function LevelPlayer({
   title,
@@ -24,13 +29,14 @@ export function LevelPlayer({
   const [draft, setDraft] = useState<AnswerValue | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // erste unbeantwortete Frage
-  const firstOpen = questions.findIndex((q) => answers[q.id] === undefined);
+  // erste nicht endgültig beantwortete Frage
+  const firstOpen = questions.findIndex((q) => !isDone(answers[q.id]));
   const [index, setIndex] = useState(firstOpen === -1 ? questions.length : firstOpen);
 
   const answeredCount = useMemo(
-    () => questions.filter((q) => answers[q.id] !== undefined).length,
+    () => questions.filter((q) => isDone(answers[q.id])).length,
     [questions, answers],
   );
   const totalPoints = useMemo(
@@ -77,13 +83,15 @@ export function LevelPlayer({
 
   const question = questions[index];
   const existing = answers[question.id];
-  const locked = existing !== undefined;
+  const locked = isDone(existing);
   const shown = locked ? existing.value : draft;
+  const storedValue = existing?.value ?? null;
 
   async function submit() {
     if (pending || !draft) return;
     setPending(true);
     setError(null);
+    setNotice(null);
 
     try {
       const res = await fetch('/api/answer', {
@@ -110,11 +118,13 @@ export function LevelPlayer({
         return;
       }
 
-      setAnswers((prev) => ({
-        ...prev,
-        [question.id]: { value: draft, points: data.points ?? 0 },
-      }));
+      const stored = { value: (data.value as AnswerValue) ?? draft, points: data.points ?? 0 };
+      setAnswers((prev) => ({ ...prev, [question.id]: stored }));
       setDraft(null);
+      if (data.final === false) {
+        // Zoom: Fehlversuch, nächste Stufe – die Frage bleibt offen
+        setNotice('Leider daneben. Nächste Stufe – neuer Tipp.');
+      }
       router.refresh(); // Score im Header aktualisieren
     } catch {
       setError('Keine Verbindung. Deine Eingabe bleibt stehen – einfach nochmal tippen.');
@@ -126,6 +136,7 @@ export function LevelPlayer({
   function next() {
     setDraft(null);
     setError(null);
+    setNotice(null);
     setIndex((i) => i + 1);
   }
 
@@ -151,9 +162,14 @@ export function LevelPlayer({
       <QuestionInput
         question={question}
         value={shown}
+        saved={storedValue}
         onChange={setDraft}
         disabled={locked || pending}
       />
+
+      {notice && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-[15px] text-amber-900">{notice}</p>
+      )}
 
       {error && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-[15px] text-red-800">{error}</p>
@@ -176,7 +192,7 @@ export function LevelPlayer({
           )}
         </div>
       ) : (
-        <Button onClick={submit} disabled={pending || !isComplete(question, draft)}>
+        <Button onClick={submit} disabled={pending || !isComplete(question, draft, storedValue)}>
           {pending ? 'Wird gespeichert …' : 'Antwort abgeben'}
         </Button>
       )}

@@ -45,9 +45,10 @@ export type ZoomQuestion = QuestionBase & {
 
 export type AgeQuestion = QuestionBase & {
   type: 'age';
+  /** public/age/<image>.jpg */
   image: string;
-  /** die beiden Personen auf dem Foto */
-  people: [string, string];
+  /** eine oder zwei Personen auf dem Foto, je Person ein Zahlenfeld */
+  people: string[];
 };
 
 export type Question =
@@ -68,5 +69,11 @@ export type AnswerValue =
   | { type: 'text'; text: string }
   | { type: 'multi'; options: string[] }
   | { type: 'order'; items: string[] }
-  | { type: 'zoom'; option: string; step: 1 | 2 | 3 }
-  | { type: 'age'; numbers: [number, number] };
+  /** alle bisherigen Tipps; die Stufe ist guesses.length, pro Stufe ein Versuch */
+  | { type: 'zoom'; guesses: string[] }
+  /** ein Wert je Person, gleiche Reihenfolge wie question.people */
+  | { type: 'age'; numbers: number[] }
+  /** Bingo-Feld: Pfad des Selfies im Storage-Bucket `selfies` */
+  | { type: 'bingo'; path: string }
+  /** Bingo-Bonus (volle Reihe/Spalte/alles), automatisch vergeben */
+  | { type: 'bingo_bonus'; line: string };

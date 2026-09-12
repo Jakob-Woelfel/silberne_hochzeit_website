@@ -54,7 +54,19 @@ function QuestionCard({
   question: Question;
   solution: Solution | undefined;
 }) {
-  const isPlaceholder = /PLATZHALTER/i.test(question.prompt);
+  const image = 'image' in question ? question.image : null;
+  const isPlaceholder =
+    /PLATZHALTER|TODO/i.test(question.prompt) ||
+    (image !== null && /^TODO/i.test(image)) ||
+    ('options' in question && question.options.some((o) => /^TODO/i.test(o))) ||
+    ('items' in question && question.items.some((o) => /^TODO/i.test(o))) ||
+    (solution !== undefined && /TODO/i.test(describeSolution(solution)));
+  const thumb =
+    image === null || /^TODO/i.test(image)
+      ? null
+      : question.type === 'zoom'
+        ? `/zoom/${image}_3.jpg`
+        : `/age/${image}.jpg`;
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -81,6 +93,30 @@ function QuestionCard({
           Einträge: {question.items.join(' · ')}
         </p>
       )}
+      {question.type === 'age' && (
+        <p className="mt-2 text-[15px] text-[var(--muted)]">
+          Personen: {question.people.join(' · ')}
+        </p>
+      )}
+      {image !== null && (
+        <div className="mt-2 flex items-center gap-3">
+          {thumb ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Admin, unoptimiert reicht
+            <img
+              src={thumb}
+              alt=""
+              className="h-16 w-16 rounded-lg border border-[var(--border)] object-cover"
+            />
+          ) : (
+            <span className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-[var(--border)] text-[12px] text-[var(--muted)]">
+              kein Bild
+            </span>
+          )}
+          <code className="text-[14px] text-[var(--muted)]">
+            {question.type === 'zoom' ? `public/zoom/${image}_1..3.jpg` : `public/age/${image}.jpg`}
+          </code>
+        </div>
+      )}
 
       <p className="mt-2 text-[15px]">
         <span className="text-[var(--muted)]">Lösung: </span>
@@ -93,7 +129,7 @@ function QuestionCard({
 
       {isPlaceholder && (
         <p className="mt-2 text-[14px] text-amber-800">
-          Noch ein Platzhalter, muss vor der Feier ersetzt werden.
+          Enthält noch TODO-Werte, muss vor der Feier ersetzt werden.
         </p>
       )}
     </div>
@@ -115,6 +151,6 @@ function describeSolution(solution: Solution): string {
     case 'zoom':
       return solution.correct;
     case 'age':
-      return `${solution.correct[0]} und ${solution.correct[1]}`;
+      return solution.correct.join(' und ');
   }
 }
