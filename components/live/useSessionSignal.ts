@@ -15,8 +15,11 @@ export function useSessionSignal(onChange: () => void) {
     } catch {
       return;
     }
+    // Eindeutiger Name: `channel(name)` liefert sonst einen bereits abonnierten
+    // Kanal zurück (StrictMode, zweiter Hook auf derselben Seite) und `.on()`
+    // nach `subscribe()` wirft.
     const channel = client
-      .channel('session-live')
+      .channel(`session-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'session' },

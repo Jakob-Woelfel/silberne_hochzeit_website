@@ -16,7 +16,7 @@ export const LIVE_SOLUTIONS: Record<string, Parent> = {
   live_q1: 'Bernd', // Keine Macht den Drogen
   live_q2: 'Katrin', // noch zwei Mails
   live_q3: 'Bernd', // jede Beziehungskrise
-  live_q4: 'Katrin', // Matcha Latte – im Screenshot ohne Namen, laut Chat-Hintergrund Katrin
+  live_q4: 'Bernd', // Matcha Latte
   live_q5: 'Katrin', // Ikkimel
   live_q6: 'Katrin', // Sachen-Sammel-Nachbar
 
