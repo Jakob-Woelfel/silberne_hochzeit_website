@@ -229,3 +229,89 @@ describe('bingoBonuses', () => {
     expect(bingoBonuses(['a'], [])).toEqual([]);
   });
 });
+
+// ── Live-Session ─────────────────────────────────────────────────────────────
+
+import { liveBonusForRank, liveGuessPoints, liveTeamScores, rankTeams } from './scoring';
+
+describe('liveGuessPoints', () => {
+  const opts = { limitMs: 20_000, base: 100, speedBonus: 50 };
+
+  it('falsch = 0', () => {
+    expect(liveGuessPoints(false, { ...opts, elapsedMs: 0 })).toBe(0);
+  });
+
+  it('sofort richtig = Basis + voller Bonus', () => {
+    expect(liveGuessPoints(true, { ...opts, elapsedMs: 0 })).toBe(150);
+  });
+
+  it('nach der Hälfte der Zeit = halber Bonus', () => {
+    expect(liveGuessPoints(true, { ...opts, elapsedMs: 10_000 })).toBe(125);
+  });
+
+  it('nach Ablauf (Toleranz) = nur Basis', () => {
+    expect(liveGuessPoints(true, { ...opts, elapsedMs: 21_500 })).toBe(100);
+  });
+
+  it('ohne Tempobonus = Basis', () => {
+    expect(liveGuessPoints(true, { ...opts, speedBonus: 0, elapsedMs: 0 })).toBe(100);
+  });
+});
+
+describe('liveTeamScores', () => {
+  const participants = [
+    { guestId: 'a', teamId: 1 },
+    { guestId: 'b', teamId: 1 },
+    { guestId: 'c', teamId: 2 },
+  ];
+
+  it('mittelt über die Teilnehmenden des Teams', () => {
+    const scores = liveTeamScores(
+      [1, 2, 3],
+      participants,
+      [
+        { guestId: 'a', teamId: 1, taskId: 'live_q1', option: 'Bernd', points: 150 },
+        { guestId: 'b', teamId: 1, taskId: 'live_q1', option: 'Katrin', points: 0 },
+        { guestId: 'c', teamId: 2, taskId: 'live_q1', option: 'Bernd', points: 120 },
+      ],
+      ['live_q1'],
+    );
+    expect(scores.find((s) => s.teamId === 1)?.total).toBe(75);
+    expect(scores.find((s) => s.teamId === 2)?.total).toBe(120);
+    expect(scores.find((s) => s.teamId === 3)?.total).toBe(0);
+    expect(scores.find((s) => s.teamId === 3)?.participants).toBe(0);
+  });
+
+  it('summiert über mehrere Fragen und rundet erst am Ende', () => {
+    const scores = liveTeamScores(
+      [1],
+      participants,
+      [
+        { guestId: 'a', teamId: 1, taskId: 'live_q1', option: 'x', points: 101 },
+        { guestId: 'a', teamId: 1, taskId: 'live_q2', option: 'x', points: 101 },
+      ],
+      ['live_q1', 'live_q2'],
+    );
+    expect(scores[0].perQuestion).toEqual({ live_q1: 51, live_q2: 51 });
+    expect(scores[0].total).toBe(101);
+  });
+});
+
+describe('rankTeams / liveBonusForRank', () => {
+  it('vergibt Plätze mit Gleichstand', () => {
+    const ranks = rankTeams([
+      { teamId: 1, participants: 1, total: 50, perQuestion: {} },
+      { teamId: 2, participants: 1, total: 80, perQuestion: {} },
+      { teamId: 3, participants: 1, total: 50, perQuestion: {} },
+    ]);
+    expect(ranks.get(2)).toBe(1);
+    expect(ranks.get(1)).toBe(2);
+    expect(ranks.get(3)).toBe(2);
+  });
+
+  it('Bonus nach Platz', () => {
+    expect(liveBonusForRank(1, [300, 200, 100])).toBe(300);
+    expect(liveBonusForRank(3, [300, 200, 100])).toBe(100);
+    expect(liveBonusForRank(4, [300, 200, 100])).toBe(0);
+  });
+});

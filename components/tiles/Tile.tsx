@@ -8,7 +8,9 @@ export type TileState =
   | { kind: 'locked'; unlockAt: number | null; note?: string }
   | { kind: 'open'; done: number; total: number }
   | { kind: 'done'; points: number }
-  | { kind: 'soon'; note: string };
+  | { kind: 'soon'; note: string }
+  /** Live-Runde läuft – anklickbar, pulsierender Badge */
+  | { kind: 'live'; note: string };
 
 export function Tile({
   href,
@@ -21,14 +23,16 @@ export function Tile({
   subtitle: string;
   state: TileState;
 }) {
-  const clickable = state.kind === 'open' || state.kind === 'done';
+  const clickable = state.kind === 'open' || state.kind === 'done' || state.kind === 'live';
 
   const body = (
     <div
       className={`rounded-2xl border p-5 ${
-        clickable
-          ? 'border-[var(--border)] bg-[var(--surface)]'
-          : 'border-dashed border-[var(--border)] bg-transparent'
+        state.kind === 'live'
+          ? 'border-[var(--accent)] bg-[var(--accent)]/8'
+          : clickable
+            ? 'border-[var(--border)] bg-[var(--surface)]'
+            : 'border-dashed border-[var(--border)] bg-transparent'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -81,6 +85,18 @@ function StateBadge({ state }: { state: TileState }) {
   if (state.kind === 'soon') {
     return (
       <span className="shrink-0 rounded-full bg-[var(--border)] px-3 py-1 text-[14px] text-[var(--muted)]">
+        {state.note}
+      </span>
+    );
+  }
+
+  if (state.kind === 'live') {
+    return (
+      <span className="flex shrink-0 items-center gap-2 rounded-full bg-[var(--accent)] px-3 py-1 text-[14px] font-semibold text-white">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/80" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+        </span>
         {state.note}
       </span>
     );

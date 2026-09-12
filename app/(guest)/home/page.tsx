@@ -5,6 +5,7 @@ import { unlockTimestamp } from '@/content/schedule';
 import { isModuleOpen } from '@/lib/unlock';
 import { isFinalAnswer } from '@/lib/scoring';
 import { isAdminPreview } from '@/lib/admin';
+import { loadSession } from '@/lib/live';
 import { Tile, type TileState } from '@/components/tiles/Tile';
 import { redirect } from 'next/navigation';
 import type { AnswerValue } from '@/content/types';
@@ -15,8 +16,13 @@ export default async function HomePage() {
   const guest = await getGuest();
   if (!guest) redirect('/start');
 
-  const answers = await getAllAnswers(guest.id);
-  const preview = await isAdminPreview();
+  const [answers, preview, session] = await Promise.all([
+    getAllAnswers(guest.id),
+    isAdminPreview(),
+    loadSession(),
+  ]);
+  // Sobald die Live-Runde läuft, sind Level und Bingo zu (Kickoff 4.1).
+  const closed = !preview && session.phase !== 'idle';
 
   const levelTiles = LEVEL_NUMBERS.map((n) => {
     const level = LEVELS[n];
@@ -36,6 +42,8 @@ export default async function HomePage() {
       state = { kind: 'soon', note: 'kommt noch' };
     } else if (answered.length === total) {
       state = { kind: 'done', points };
+    } else if (closed) {
+      state = { kind: 'soon', note: 'geschlossen' };
     } else {
       state = { kind: 'open', done: answered.length, total };
     }
@@ -52,8 +60,19 @@ export default async function HomePage() {
     bingoState = { kind: 'locked', unlockAt: unlockTimestamp('bingo') };
   } else if (bingoDone === BINGO_SIZE) {
     bingoState = { kind: 'done', points: bingoPoints };
+  } else if (closed) {
+    bingoState = { kind: 'soon', note: 'geschlossen' };
   } else {
     bingoState = { kind: 'open', done: bingoDone, total: BINGO_SIZE };
+  }
+
+  let liveState: TileState;
+  if (session.phase === 'idle') {
+    liveState = { kind: 'locked', unlockAt: null, note: 'ab 20 Uhr' };
+  } else if (session.phase === 'ended') {
+    liveState = { kind: 'soon', note: 'beendet' };
+  } else {
+    liveState = { kind: 'live', note: 'läuft jetzt' };
   }
 
   return (
@@ -86,7 +105,7 @@ export default async function HomePage() {
         href="/live"
         title="Live-Runde"
         subtitle="Am Abend, alle gleichzeitig"
-        state={{ kind: 'locked', unlockAt: null, note: 'ab 20 Uhr' }}
+        state={liveState}
       />
     </div>
   );

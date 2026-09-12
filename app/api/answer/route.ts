@@ -6,6 +6,7 @@ import { solutionFor } from '@/content/levels.solutions';
 import { isFinalAnswer, normalizeText, score } from '@/lib/scoring';
 import { isTaskOpen } from '@/lib/unlock';
 import { isAdminPreview } from '@/lib/admin';
+import { liveHasStarted } from '@/lib/live';
 import type { AnswerValue } from '@/content/types';
 
 export const dynamic = 'force-dynamic';
@@ -39,9 +40,17 @@ export async function POST(request: Request) {
   }
 
   // Der Admin-Vorschaumodus hebt die Sperre nur fuer diesen Browser auf.
-  if (!isTaskOpen(taskId) && !(await isAdminPreview())) {
+  const preview = await isAdminPreview();
+  if (!isTaskOpen(taskId) && !preview) {
     return NextResponse.json(
       { error: 'Diese Aufgabe ist noch nicht freigeschaltet.' },
+      { status: 403 },
+    );
+  }
+  // Mit der Live-Runde sind die Level zu (Kickoff 4.1).
+  if (!preview && (await liveHasStarted())) {
+    return NextResponse.json(
+      { error: 'Die Level sind seit Beginn der Live-Runde geschlossen.' },
       { status: 403 },
     );
   }

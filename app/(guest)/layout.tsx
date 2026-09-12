@@ -4,6 +4,8 @@ import { teamById } from '@/content/teams';
 import { BottomNav } from '@/components/BottomNav';
 import { isAdmin, isAdminPreview } from '@/lib/admin';
 import Link from 'next/link';
+import { loadSession } from '@/lib/live';
+import { LiveBanner } from '@/components/live/LiveBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +15,7 @@ export default async function GuestLayout({ children }: LayoutProps<'/'>) {
 
   const standing = await getStanding(guest);
   const team = teamById(guest.team_id);
-  const [admin, preview] = await Promise.all([isAdmin(), isAdminPreview()]);
+  const [admin, preview, session] = await Promise.all([isAdmin(), isAdminPreview(), loadSession()]);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -51,6 +53,8 @@ export default async function GuestLayout({ children }: LayoutProps<'/'>) {
           </div>
         </div>
       </header>
+
+      <LiveBanner initialPhase={session.phase} />
 
       <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-28 pt-5">{children}</main>
 

@@ -20,11 +20,17 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
           <Link href="/admin" className="font-semibold">
             Admin
           </Link>
+          <Link href="/admin/live" className="text-[15px] font-semibold text-[var(--accent-strong)]">
+            Live-Runde
+          </Link>
           <Link href="/admin/content" className="text-[15px] text-[var(--muted)]">
             Inhalte
           </Link>
           <Link href="/screen/gallery" className="text-[15px] text-[var(--muted)]">
             Selfie-Galerie
+          </Link>
+          <Link href="/screen/live" className="text-[15px] text-[var(--muted)]">
+            Beamer
           </Link>
           <Link href="/home" className="text-[15px] text-[var(--muted)]">
             Gast-Ansicht

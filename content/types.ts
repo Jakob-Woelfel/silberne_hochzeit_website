@@ -76,4 +76,10 @@ export type AnswerValue =
   /** Bingo-Feld: Pfad des Selfies im Storage-Bucket `selfies` */
   | { type: 'bingo'; path: string }
   /** Bingo-Bonus (volle Reihe/Spalte/alles), automatisch vergeben */
-  | { type: 'bingo_bonus'; line: string };
+  | { type: 'bingo_bonus'; line: string }
+  /** Live-Session: Tipp bei quote/either; ms = Reaktionszeit ab Fragestart */
+  | { type: 'live'; option: string; ms: number }
+  /** Live-Session: Freitext (menti) */
+  | { type: 'live_text'; text: string }
+  /** Live-Session: Gast ist in der Lobby angekommen */
+  | { type: 'live_join' };

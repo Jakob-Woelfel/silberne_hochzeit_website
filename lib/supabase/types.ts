@@ -31,6 +31,13 @@ export type SessionRow = {
   updated_at: string;
 };
 
+export type TeamBonus = {
+  team_id: number;
+  points: number;
+  note: string | null;
+  updated_at: string;
+};
+
 export type SoloRankingRow = {
   id: string;
   name: string;
@@ -71,6 +78,7 @@ export type Database = {
         { guest_id: string; task_id: string; storage_path: string }
       >;
       session: Table<SessionRow, Partial<SessionRow> & { id: number }>;
+      team_bonus: Table<TeamBonus, { team_id: number; points: number; note?: string | null; updated_at?: string }>;
     };
     Views: {
       solo_ranking: View<SoloRankingRow>;

@@ -187,3 +187,90 @@ export function maxPoints(solution: Solution): number {
       );
   }
 }
+
+// ── Live-Session (Kickoff 4.4) ───────────────────────────────────────────────
+
+/**
+ * Punkte für einen Live-Tipp. Zitate: richtig = Basis + Tempobonus (linear
+ * nach Restzeit). „Wer würde eher“: nur Basis, da erst bei der Auflösung
+ * feststeht, was zählt. Falsch = 0.
+ */
+export function liveGuessPoints(
+  correct: boolean,
+  opts: { elapsedMs: number; limitMs: number; base: number; speedBonus: number },
+): number {
+  if (!correct) return 0;
+  if (opts.limitMs <= 0 || opts.speedBonus <= 0) return opts.base;
+  const remaining = Math.min(opts.limitMs, Math.max(0, opts.limitMs - opts.elapsedMs));
+  return opts.base + Math.round((opts.speedBonus * remaining) / opts.limitMs);
+}
+
+export type LiveAnswerRow = {
+  guestId: string;
+  teamId: number | null;
+  taskId: string;
+  option: string | null;
+  points: number;
+};
+
+export type LiveTeamScore = {
+  teamId: number;
+  /** Mitglieder, die in der Lobby waren oder geantwortet haben */
+  participants: number;
+  /** Summe der Team-Durchschnitte über alle Fragen, gerundet */
+  total: number;
+  /** Durchschnitt je Frage */
+  perQuestion: Record<string, number>;
+};
+
+/**
+ * Team-Wertung der Live-Runde: je Frage der Durchschnitt über die
+ * Teilnehmenden des Teams (nicht über alle Mitglieder – wer gar nicht dabei
+ * war, zieht sein Team nicht runter; wer dabei ist und nicht tippt, schon).
+ * Damit sind ungleich große Teams vergleichbar.
+ */
+export function liveTeamScores(
+  teamIds: number[],
+  participants: { guestId: string; teamId: number | null }[],
+  answers: LiveAnswerRow[],
+  questionIds: string[],
+): LiveTeamScore[] {
+  const count = new Map<number, number>();
+  for (const p of participants) {
+    if (p.teamId === null) continue;
+    count.set(p.teamId, (count.get(p.teamId) ?? 0) + 1);
+  }
+
+  return teamIds.map((teamId) => {
+    const n = count.get(teamId) ?? 0;
+    const perQuestion: Record<string, number> = {};
+    let total = 0;
+    for (const qid of questionIds) {
+      const sum = answers
+        .filter((a) => a.teamId === teamId && a.taskId === qid)
+        .reduce((s, a) => s + a.points, 0);
+      const avg = n > 0 ? sum / n : 0;
+      perQuestion[qid] = Math.round(avg);
+      total += avg;
+    }
+    return { teamId, participants: n, total: Math.round(total), perQuestion };
+  });
+}
+
+/**
+ * Platz je Team (1 = bester); gleiche Punkte = gleicher Platz.
+ */
+export function rankTeams(scores: LiveTeamScore[]): Map<number, number> {
+  const sorted = [...scores].sort((a, b) => b.total - a.total);
+  const ranks = new Map<number, number>();
+  sorted.forEach((s, i) => {
+    const prev = sorted[i - 1];
+    ranks.set(s.teamId, prev && prev.total === s.total ? ranks.get(prev.teamId)! : i + 1);
+  });
+  return ranks;
+}
+
+/** Bonus nach Platz; jenseits der Liste gibt es nichts. */
+export function liveBonusForRank(rank: number, bonus: readonly number[]): number {
+  return bonus[rank - 1] ?? 0;
+}

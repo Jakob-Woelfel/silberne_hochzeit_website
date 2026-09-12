@@ -19,10 +19,13 @@ export function LevelPlayer({
   title,
   questions,
   saved,
+  closedNote = null,
 }: {
   title: string;
   questions: Question[];
   saved: Record<string, SavedAnswer>;
+  /** gesetzt, wenn keine neuen Antworten mehr angenommen werden (Live-Runde läuft) */
+  closedNote?: string | null;
 }) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, SavedAnswer>>(saved);
@@ -171,6 +174,10 @@ export function LevelPlayer({
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-[15px] text-amber-900">{notice}</p>
       )}
 
+      {closedNote && !locked && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-[15px] text-amber-900">{closedNote}</p>
+      )}
+
       {error && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-[15px] text-red-800">{error}</p>
       )}
@@ -192,7 +199,10 @@ export function LevelPlayer({
           )}
         </div>
       ) : (
-        <Button onClick={submit} disabled={pending || !isComplete(question, draft, storedValue)}>
+        <Button
+          onClick={submit}
+          disabled={pending || closedNote !== null || !isComplete(question, draft, storedValue)}
+        >
           {pending ? 'Wird gespeichert …' : 'Antwort abgeben'}
         </Button>
       )}
