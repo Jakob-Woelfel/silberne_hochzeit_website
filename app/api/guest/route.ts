@@ -6,12 +6,57 @@ import { teamById } from '@/content/teams';
 
 export const dynamic = 'force-dynamic';
 
+function setGuestCookie(res: NextResponse, id: string) {
+  res.cookies.set(GUEST_COOKIE, id, {
+    path: '/',
+    maxAge: GUEST_COOKIE_MAX_AGE,
+    sameSite: 'lax',
+    httpOnly: false, // der Client stellt den Cookie aus dem localStorage wieder her
+  });
+}
+
+/** Gästeliste für „Ich war schon dabei“ (Kickoff 6.2). Nur Namen und Team. */
+export async function GET() {
+  const { data } = await supabaseAdmin()
+    .from('guests')
+    .select('id, name, team_id')
+    .order('name', { ascending: true });
+  const guests = ((data ?? []) as unknown as Pick<Guest, 'id' | 'name' | 'team_id'>[]).map((g) => ({
+    id: g.id,
+    name: g.name,
+    team: teamById(g.team_id)?.name ?? null,
+  }));
+  return NextResponse.json({ guests }, { headers: { 'Cache-Control': 'no-store' } });
+}
+
 export async function POST(request: Request) {
   let name: unknown;
+  let guestId: unknown;
   try {
-    ({ name } = await request.json());
+    ({ name, guestId } = await request.json());
   } catch {
     return NextResponse.json({ error: 'Ungültige Anfrage.' }, { status: 400 });
+  }
+
+  // Wiedereinstieg: bestehende Identität übernehmen, nichts wird angelegt oder geändert.
+  if (typeof guestId === 'string') {
+    const { data } = await supabaseAdmin()
+      .from('guests')
+      .select('*')
+      .eq('id', guestId)
+      .maybeSingle();
+    const guest = data as unknown as Guest | null;
+    if (!guest) {
+      return NextResponse.json({ error: 'Gast nicht gefunden.' }, { status: 404 });
+    }
+    const team = teamById(guest.team_id);
+    const res = NextResponse.json({
+      id: guest.id,
+      name: guest.name,
+      team: team ? { id: team.id, name: team.name, color: team.color } : null,
+    });
+    setGuestCookie(res, guest.id);
+    return res;
   }
 
   if (typeof name !== 'string') {
@@ -45,12 +90,6 @@ export async function POST(request: Request) {
     team: team ? { id: team.id, name: team.name, color: team.color } : null,
   });
 
-  res.cookies.set(GUEST_COOKIE, guest.id, {
-    path: '/',
-    maxAge: GUEST_COOKIE_MAX_AGE,
-    sameSite: 'lax',
-    httpOnly: false, // der Client stellt den Cookie aus dem localStorage wieder her
-  });
-
+  setGuestCookie(res, guest.id);
   return res;
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { persistGuestId, restoreCookieFromLocalStorage } from '@/lib/guestClient';
+import { ResumeGuest } from '@/components/ResumeGuest';
 
 type Team = { id: number; name: string; color: string };
 
@@ -13,6 +14,7 @@ export function StartForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
+  const [resume, setResume] = useState(false);
 
   // Cookie verloren, localStorage noch da (z. B. nach Browser-Neustart)
   useEffect(() => {
@@ -67,6 +69,8 @@ export function StartForm() {
     );
   }
 
+  if (resume) return <ResumeGuest onCancel={() => setResume(false)} />;
+
   return (
     <form onSubmit={submit} className="mt-8 flex flex-col gap-4">
       <label htmlFor="name" className="font-medium">
@@ -91,6 +95,13 @@ export function StartForm() {
       <p className="text-[14px] text-[var(--muted)]">
         Kein Passwort, keine Anmeldung. Dein Name ist nur für die Anzeige.
       </p>
+      <button
+        type="button"
+        onClick={() => setResume(true)}
+        className="min-h-[56px] w-full rounded-xl border border-[var(--accent)] bg-transparent px-5 font-semibold text-[var(--accent-strong)]"
+      >
+        Ich war schon dabei – Namen auswählen
+      </button>
     </form>
   );
 }
