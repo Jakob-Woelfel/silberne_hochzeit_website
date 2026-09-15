@@ -7,6 +7,7 @@ const ITEMS = [
   { href: '/home', label: 'Start' },
   { href: '/bingo', label: 'Bingo' },
   { href: '/ranking', label: 'Ranking' },
+  { href: '/fotos', label: 'Fotos' },
 ];
 
 export function BottomNav() {

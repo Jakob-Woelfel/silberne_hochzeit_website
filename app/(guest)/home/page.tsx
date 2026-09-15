@@ -6,6 +6,7 @@ import { isFinalAnswer } from '@/lib/scoring';
 import { isAdminPreview } from '@/lib/admin';
 import { loadSession } from '@/lib/live';
 import { loadModuleAccess } from '@/lib/modules';
+import { countGalleryPhotos } from '@/lib/galleryData';
 import { Tile, type TileState } from '@/components/tiles/Tile';
 import { redirect } from 'next/navigation';
 import type { AnswerValue } from '@/content/types';
@@ -16,11 +17,12 @@ export default async function HomePage() {
   const guest = await getGuest();
   if (!guest) redirect('/start');
 
-  const [answers, preview, session, access] = await Promise.all([
+  const [answers, preview, session, access, photoCount] = await Promise.all([
     getAllAnswers(guest.id),
     isAdminPreview(),
     loadSession(),
     loadModuleAccess(),
+    countGalleryPhotos(),
   ]);
 
   const levelTiles = LEVEL_NUMBERS.map((n) => {
@@ -123,6 +125,15 @@ export default async function HomePage() {
         subtitle="Alle Fragen mit den richtigen Antworten"
         state={solutionsState}
       />
+
+      {photoCount > 0 && (
+        <Tile
+          href="/fotos"
+          title="Fotos vom Tag"
+          subtitle={`${photoCount} Selfies aus dem Bingo – ansehen und speichern`}
+          state={{ kind: 'ready', note: 'ansehen' }}
+        />
+      )}
     </div>
   );
 }

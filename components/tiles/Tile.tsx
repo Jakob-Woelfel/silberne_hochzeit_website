@@ -10,7 +10,9 @@ export type TileState =
   | { kind: 'done'; points: number }
   | { kind: 'soon'; note: string }
   /** Live-Runde läuft – anklickbar, pulsierender Badge */
-  | { kind: 'live'; note: string };
+  | { kind: 'live'; note: string }
+  /** Immer offen, ohne Fortschritt – anklickbar, ruhiger Badge mit Text */
+  | { kind: 'ready'; note: string };
 
 export function Tile({
   href,
@@ -23,7 +25,8 @@ export function Tile({
   subtitle: string;
   state: TileState;
 }) {
-  const clickable = state.kind === 'open' || state.kind === 'done' || state.kind === 'live';
+  const clickable =
+    state.kind === 'open' || state.kind === 'done' || state.kind === 'live' || state.kind === 'ready';
 
   const body = (
     <div
@@ -112,7 +115,7 @@ function StateBadge({ state }: { state: TileState }) {
 
   return (
     <span className="shrink-0 rounded-full border border-[var(--accent)] px-3 py-1 text-[14px] font-semibold text-[var(--accent-strong)]">
-      offen
+      {state.kind === 'ready' ? state.note : 'offen'}
     </span>
   );
 }

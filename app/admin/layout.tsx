@@ -29,6 +29,9 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
           <Link href="/screen/gallery" className="text-[15px] text-[var(--muted)]">
             Selfie-Galerie
           </Link>
+          <Link href="/fotos" className="text-[15px] text-[var(--muted)]">
+            Fotos (Gäste)
+          </Link>
           <Link href="/screen/live" className="text-[15px] text-[var(--muted)]">
             Beamer
           </Link>
